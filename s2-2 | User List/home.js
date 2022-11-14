@@ -4,9 +4,11 @@
 
 const BASE_URL = "https://lighthouse-user-api.herokuapp.com";
 const INDEX_URL = BASE_URL + "/api/v1/users/";
+const USER_PER_PAGE = 12;
 
 const userPanel = document.querySelector("#user-panel");
 const searchForm = document.querySelector("#searchForm");
+const pagination = document.querySelector(".pagination");
 
 const userData = [];
 const favoriteUserList =
@@ -18,7 +20,7 @@ function renderData(data) {
 
   data.forEach((user) => {
     rawHTML += `
-      <div class="card mb-3" style="width: 10rem; margin-right: 1rem">
+      <div class="card mb-3" style="width: 12rem; margin-right: 1rem">
         <img
           src="${user.avatar}"
           class="user-avatar card-img-top"
@@ -44,6 +46,25 @@ function renderData(data) {
   });
 
   userPanel.innerHTML = rawHTML;
+}
+
+//// FUNCTION render 分頁
+function renderPaginator(count) {
+  const pageCount = Math.ceil(count / USER_PER_PAGE);
+
+  let rawHTML = "";
+
+  for (let page = 1; page <= pageCount; page++) {
+    rawHTML += `<li class="page-item"><a class="page-link" href="#">${page}</a></li>`;
+  }
+
+  pagination.innerHTML = rawHTML;
+}
+
+// FUNCTION 切割每頁的資料
+function getDataPerPage(page, data) {
+  const startIndex = (page - 1) * 12;
+  return data.slice(startIndex, startIndex + 12);
 }
 
 //// FUNCTION show modal
@@ -132,11 +153,28 @@ searchForm.addEventListener("submit", (event) => {
   searchUserName(keyword);
 });
 
+//// EVENT LISTENER 頁碼
+pagination.addEventListener("click", (event) => {
+  const pages = document.querySelectorAll(".page-item");
+  const page = Number(event.target.textContent);
+  // active樣式
+  pages.forEach((p) => {
+    Number(p.textContent) === page
+      ? p.classList.add("active")
+      : p.classList.remove("active");
+  });
+  // 呈現該頁內容
+  renderData(getDataPerPage(page, userData));
+});
+
 //// EXECUTE
 axios
   .get(`${INDEX_URL}`)
   .then((response) => {
     userData.push(...response.data.results);
-    renderData(userData);
+    renderPaginator(userData.length);
+    renderData(getDataPerPage(1, userData));
+    // 第一頁的頁碼要先為 active 樣式
+    document.querySelector(".page-item").classList.add("active");
   })
   .catch((error) => console.log(error));

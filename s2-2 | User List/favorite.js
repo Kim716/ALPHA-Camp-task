@@ -2,9 +2,11 @@
 
 const BASE_URL = "https://lighthouse-user-api.herokuapp.com";
 const INDEX_URL = BASE_URL + "/api/v1/users/";
+const USER_PER_PAGE = 12;
 
 const userPanel = document.querySelector("#user-panel");
 const searchForm = document.querySelector("#searchForm");
+const pagination = document.querySelector(".pagination");
 
 const userData = [];
 const favoriteUserList =
@@ -16,7 +18,7 @@ function renderData(data) {
 
   data.forEach((user) => {
     rawHTML += `
-      <div class="card mb-3" style="width: 10rem; margin-right: 1rem">
+      <div class="card mb-3" style="width: 12rem; margin-right: 1rem">
         <img
           src="${user.avatar}"
           class="user-avatar card-img-top"
@@ -44,6 +46,25 @@ function renderData(data) {
   });
 
   userPanel.innerHTML = rawHTML;
+}
+
+//// FUNCTION render 分頁
+function renderPaginator(count) {
+  const pageCount = Math.ceil(count / USER_PER_PAGE);
+
+  let rawHTML = "";
+
+  for (let page = 1; page <= pageCount; page++) {
+    rawHTML += `<li class="page-item"><a class="page-link" href="#">${page}</a></li>`;
+  }
+
+  pagination.innerHTML = rawHTML;
+}
+
+// FUNCTION 切割每頁的資料
+function getDataPerPage(page, data) {
+  const startIndex = (page - 1) * 12;
+  return data.slice(startIndex, startIndex + 12);
 }
 
 //// FUNCTION show modal
@@ -101,12 +122,14 @@ function searchUserName(keyword) {
 function deleteFavorite(id) {
   // 找到符合 id 的那筆資料在清單中的 index
   const index = favoriteUserList.findIndex((user) => user.id === id);
+  const nowPage = Math.ceil(index / 12);
   // 從清單中移除
   favoriteUserList.splice(index, 1);
   // 更新 local storage
   localStorage.setItem("favoriteUserList", JSON.stringify(favoriteUserList));
-  // 重新 render
-  renderData(favoriteUserList);
+  // 重新 render 當前頁面
+  renderData(getDataPerPage(nowPage, favoriteUserList));
+  renderPaginator(favoriteUserList.length);
 }
 
 //// EVENT LISTENER 彈出使用者資訊視窗、加入最愛
@@ -117,6 +140,20 @@ userPanel.addEventListener("click", (event) => {
   } else if (event.target.matches(".delete-btn")) {
     deleteFavorite(id);
   }
+});
+
+//// EVENT LISTENER 頁碼
+pagination.addEventListener("click", (event) => {
+  const pages = document.querySelectorAll(".page-item");
+  const page = Number(event.target.textContent);
+  // active樣式
+  pages.forEach((p) => {
+    Number(p.textContent) === page
+      ? p.classList.add("active")
+      : p.classList.remove("active");
+  });
+  // 呈現該頁內容
+  renderData(getDataPerPage(page, userData));
 });
 
 //// EVENT LISTENER 搜尋列
@@ -135,6 +172,9 @@ axios
   .get(`${INDEX_URL}`)
   .then((response) => {
     userData.push(...response.data.results);
-    renderData(favoriteUserList);
+    renderPaginator(favoriteUserList.length);
+    renderData(getDataPerPage(1, favoriteUserList));
+    // 第一頁的頁碼要先為 active 樣式
+    document.querySelector(".page-item").classList.add("active");
   })
   .catch((error) => console.log(error));
