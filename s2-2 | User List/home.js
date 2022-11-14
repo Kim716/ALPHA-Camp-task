@@ -9,6 +9,8 @@ const userPanel = document.querySelector("#user-panel");
 const searchForm = document.querySelector("#searchForm");
 
 const userData = [];
+const favoriteUserList =
+  JSON.parse(localStorage.getItem("favoriteUserList")) || [];
 
 //// FUNCTION render Cards
 function renderData(data) {
@@ -16,7 +18,7 @@ function renderData(data) {
 
   data.forEach((user) => {
     rawHTML += `
-      <div class="card mb-2" style="width: 10rem">
+      <div class="card mb-3" style="width: 10rem; margin-right: 1rem">
         <img
           src="${user.avatar}"
           class="user-avatar card-img-top"
@@ -35,7 +37,7 @@ function renderData(data) {
           <p class="card-text">Region: ${user.region}</p>
         </div>
         <div class="card-footer d-flex justify-content-center">
-          <a href="#" class="btn">🖤</a>
+          <a  class="btn favorite-btn" data-id="${user.id}">🖤</a>
         </div>
       </div>
     `;
@@ -66,7 +68,7 @@ function showModal(id) {
   });
 }
 
-//// FUNCTION
+//// FUNCTION 搜尋結果
 function searchUserName(keyword) {
   const filteredUser = [];
 
@@ -95,11 +97,27 @@ function searchUserName(keyword) {
   renderData(filteredUser);
 }
 
-//// EVENT LISTENER 彈出使用者資訊視窗
+//// FUNCTION 加入最愛
+function addToFavorite(id) {
+  // 找到符合 id 的那筆資料
+  const favoriteUser = userData.find((user) => user.id === id);
+
+  if (favoriteUserList.some((user) => user.id === id)) {
+    return alert("這個人已經在你的最愛");
+  }
+  // 放入最愛清單
+  favoriteUserList.push(favoriteUser);
+  // 更新 local storage
+  localStorage.setItem("favoriteUserList", JSON.stringify(favoriteUserList));
+}
+
+//// EVENT LISTENER 彈出使用者資訊視窗、加入最愛
 userPanel.addEventListener("click", (event) => {
+  const id = Number(event.target.dataset.id);
   if (event.target.matches(".user-avatar")) {
-    const id = event.target.dataset.id;
     showModal(id);
+  } else if (event.target.matches(".favorite-btn")) {
+    addToFavorite(id);
   }
 });
 
