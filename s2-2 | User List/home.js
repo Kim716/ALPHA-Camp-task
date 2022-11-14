@@ -4,23 +4,14 @@
 
 const BASE_URL = "https://lighthouse-user-api.herokuapp.com";
 const INDEX_URL = BASE_URL + "/api/v1/users/";
+
 const userPanel = document.querySelector("#user-panel");
+const searchForm = document.querySelector("#searchForm");
+
 const userData = [];
 
-// FUNCTION get user data then render it
-// 到底要先抓資料存下來再渲染，還是抓完就渲染？自己的JS沒有存
-function renderData(URL) {
-  axios
-    .get(`${URL}`)
-    .then((response) => {
-      userData.push(...response.data.results);
-      generateCards(userData);
-    })
-    .catch((error) => console.log(error));
-}
-
-// FUNCTION generate Cards
-function generateCards(data) {
+//// FUNCTION render Cards
+function renderData(data) {
   let rawHTML = "";
 
   data.forEach((user) => {
@@ -37,7 +28,9 @@ function generateCards(data) {
           data-id="${user.id}"
         />
         <div class="card-body d-flex flex-column justify-content-between">
-          <h5 class="card-title">${user.name} ${user.surname}</h5>
+          <h5 class="card-title card-user-name">${user.name} ${
+      user.surname
+    }</h5>
           <p class="card-text">${user.gender === "male" ? "💁🏻‍♂️" : "💁🏻‍♀️"}</p>
           <p class="card-text">Region: ${user.region}</p>
         </div>
@@ -51,7 +44,7 @@ function generateCards(data) {
   userPanel.innerHTML = rawHTML;
 }
 
-// FUNCTION show modal
+//// FUNCTION show modal
 function showModal(id) {
   const avatar = document.querySelector("#user-modal-avatar");
   const name = document.querySelector("#user-modal-name");
@@ -73,7 +66,36 @@ function showModal(id) {
   });
 }
 
-// EVENT LISTENER
+//// FUNCTION
+function searchUserName(keyword) {
+  const filteredUser = [];
+
+  userData.forEach((user) => {
+    // 資料有分 name 跟 surname ，先合併
+    user.fullName = `${user.name} ${user.surname}`.toLowerCase().trim();
+    // 檢查名字有沒有符合的，有就抓進陣列
+    if (user.fullName.includes(keyword)) {
+      filteredUser.push(user);
+    }
+  });
+
+  // 因為有 forEach 就順便在裡面 push 了，不然也可以用 .filter()
+  /*
+    let filteredUser = []
+    filteredUser = userData.filter((user) => user.fullName.includes(keyword));
+  */
+
+  // 如果搜尋結果沒有吻合的，filteredUser陣列會為空，這時也不用重新渲染畫面，跳出提示就好
+  // 補充： include() 空的會讓全部都通過篩選，filteredUser陣列為全滿
+  if (filteredUser.length === 0) {
+    return alert("沒有符合的人名！");
+  }
+
+  // 重新渲染畫面
+  renderData(filteredUser);
+}
+
+//// EVENT LISTENER 彈出使用者資訊視窗
 userPanel.addEventListener("click", (event) => {
   if (event.target.matches(".user-avatar")) {
     const id = event.target.dataset.id;
@@ -81,5 +103,22 @@ userPanel.addEventListener("click", (event) => {
   }
 });
 
-// EXECUTE
-renderData(INDEX_URL);
+//// EVENT LISTENER 搜尋列
+searchForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const keyword = document
+    .querySelector("#searchInput")
+    .value.toLowerCase()
+    .trim();
+
+  searchUserName(keyword);
+});
+
+//// EXECUTE
+axios
+  .get(`${INDEX_URL}`)
+  .then((response) => {
+    userData.push(...response.data.results);
+    renderData(userData);
+  })
+  .catch((error) => console.log(error));

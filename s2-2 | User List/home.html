@@ -34,7 +34,7 @@
               <a class="nav-link active" aria-current="page" href="#">Home</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Favorite</a>
+              <a class="nav-link" href="favorite.html">Favorite</a>
             </li>
           </ul>
         </div>
@@ -42,16 +42,14 @@
     </nav>
     <div class="container">
       <!-- 搜尋列 篩選 -->
-      <form class="row mt-4">
+      <form class="row mt-4" id="searchForm">
         <div class="col-5">
-          <label class="visually-hidden" for="inlineFormInputGroupUsername"
-            >Search Name</label
-          >
+          <label class="visually-hidden" for="searchInput">Search Name</label>
           <div class="input-group">
             <input
               type="text"
               class="form-control"
-              id="inlineFormInputGroupUsername"
+              id="searchInput"
               placeholder="Search Name"
             />
           </div>
@@ -120,6 +118,6 @@
       integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
       crossorigin="anonymous"
     ></script>
-    <script src="script.js"></script>
+    <script src="home.js"></script>
   </body>
 </html>
