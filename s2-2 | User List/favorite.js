@@ -3,14 +3,14 @@
 const BASE_URL = "https://lighthouse-user-api.herokuapp.com";
 const INDEX_URL = BASE_URL + "/api/v1/users/";
 const USER_PER_PAGE = 12;
-
-const userPanel = document.querySelector("#user-panel");
-const searchForm = document.querySelector("#searchForm");
-const pagination = document.querySelector(".pagination");
-
 const userData = [];
 const favoriteUserList =
   JSON.parse(localStorage.getItem("favoriteUserList")) || [];
+
+// DOM nodes
+const userPanel = document.querySelector("#user-panel");
+const searchForm = document.querySelector("#searchForm");
+const pagination = document.querySelector(".pagination");
 
 //// FUNCTION render Cards
 function renderData(data) {
@@ -61,7 +61,7 @@ function renderPaginator(count) {
   pagination.innerHTML = rawHTML;
 }
 
-// FUNCTION 切割每頁的資料
+//// FUNCTION 切割每頁的資料
 function getDataPerPage(page, data) {
   const startIndex = (page - 1) * 12;
   return data.slice(startIndex, startIndex + 12);
@@ -106,6 +106,11 @@ function searchUserName(keyword) {
   /*
     let filteredUser = []
     filteredUser = favoriteUserList.filter((user) => user.fullName.includes(keyword));
+
+    // 同學這樣做
+    filteredUsers = users.filter((user) =>
+        (user.name + ' ' + user.surname).toLowerCase().includes(keyword)
+    );
   */
 
   // 如果搜尋結果沒有吻合的，filteredUser陣列會為空，這時也不用重新渲染畫面，跳出提示就好
@@ -120,9 +125,13 @@ function searchUserName(keyword) {
 
 //// FUNCTION 刪除我的最愛
 function deleteFavorite(id) {
+  // 如果根本沒有喜愛的user 就不用啟動
+  if (!favoriteUserList || !favoriteUserList.length) return;
   // 找到符合 id 的那筆資料在清單中的 index
   const index = favoriteUserList.findIndex((user) => user.id === id);
   const nowPage = Math.ceil(index / 12);
+  // 找不到那個user，就不用繼續下去
+  if (userIndex === -1) return;
   // 從清單中移除
   favoriteUserList.splice(index, 1);
   // 更新 local storage

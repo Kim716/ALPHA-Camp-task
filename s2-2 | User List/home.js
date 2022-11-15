@@ -11,6 +11,7 @@ const searchForm = document.querySelector("#searchForm");
 const pagination = document.querySelector(".pagination");
 
 const userData = [];
+let filteredUser = [];
 const favoriteUserList =
   JSON.parse(localStorage.getItem("favoriteUserList")) || [];
 
@@ -62,7 +63,10 @@ function renderPaginator(count) {
 }
 
 // FUNCTION 切割每頁的資料
-function getDataPerPage(page, data) {
+function getDataPerPage(page) {
+  // 看是不是在搜尋條件下
+  const data = filteredUser.length ? filteredUser : userData;
+
   const startIndex = (page - 1) * 12;
   return data.slice(startIndex, startIndex + 12);
 }
@@ -73,6 +77,12 @@ function showModal(id) {
   const name = document.querySelector("#user-modal-name");
   const gender = document.querySelector("#user-modal-gender");
   const info = document.querySelector("#user-modal-info");
+
+  // 先將 modal 內容清空，以免出現上一個 user 的資料殘影
+  name.textContent = "";
+  avatar.src = "";
+  gender.textContent = "";
+  info.innerHTML = "";
 
   axios.get(`${INDEX_URL}${id}`).then((response) => {
     const user = response.data;
@@ -91,21 +101,25 @@ function showModal(id) {
 
 //// FUNCTION 搜尋結果
 function searchUserName(keyword) {
-  const filteredUser = [];
-
   userData.forEach((user) => {
     // 資料有分 name 跟 surname ，先合併
     user.fullName = `${user.name} ${user.surname}`.toLowerCase().trim();
     // 檢查名字有沒有符合的，有就抓進陣列
-    if (user.fullName.includes(keyword)) {
-      filteredUser.push(user);
-    }
+    // if (user.fullName.includes(keyword)) {
+    //   filteredUser.push(user);
+    // }
   });
+  filteredUser = userData.filter((user) => user.fullName.includes(keyword));
 
   // 因為有 forEach 就順便在裡面 push 了，不然也可以用 .filter()
   /*
     let filteredUser = []
     filteredUser = userData.filter((user) => user.fullName.includes(keyword));
+
+        // 同學這樣做
+    filteredUsers = users.filter((user) =>
+        (user.name + ' ' + user.surname).toLowerCase().includes(keyword)
+    );
   */
 
   // 如果搜尋結果沒有吻合的，filteredUser陣列會為空，這時也不用重新渲染畫面，跳出提示就好
@@ -115,7 +129,8 @@ function searchUserName(keyword) {
   }
 
   // 重新渲染畫面
-  renderData(filteredUser);
+  renderData(getDataPerPage(1));
+  renderPaginator(filteredUser.length);
 }
 
 //// FUNCTION 加入最愛
@@ -164,7 +179,7 @@ pagination.addEventListener("click", (event) => {
       : p.classList.remove("active");
   });
   // 呈現該頁內容
-  renderData(getDataPerPage(page, userData));
+  renderData(getDataPerPage(page));
 });
 
 //// EXECUTE
@@ -173,7 +188,7 @@ axios
   .then((response) => {
     userData.push(...response.data.results);
     renderPaginator(userData.length);
-    renderData(getDataPerPage(1, userData));
+    renderData(getDataPerPage(1));
     // 第一頁的頁碼要先為 active 樣式
     document.querySelector(".page-item").classList.add("active");
   })
