@@ -5,15 +5,15 @@
 const BASE_URL = "https://lighthouse-user-api.herokuapp.com";
 const INDEX_URL = BASE_URL + "/api/v1/users/";
 const USER_PER_PAGE = 12;
-
-const userPanel = document.querySelector("#user-panel");
-const searchForm = document.querySelector("#searchForm");
-const pagination = document.querySelector(".pagination");
-
 const userData = [];
 let filteredUser = [];
 const favoriteUserList =
   JSON.parse(localStorage.getItem("favoriteUserList")) || [];
+
+// DOM nodes
+const userPanel = document.querySelector("#user-panel");
+const searchForm = document.querySelector("#searchForm");
+const pagination = document.querySelector(".pagination");
 
 //// FUNCTION render Cards
 function renderData(data) {

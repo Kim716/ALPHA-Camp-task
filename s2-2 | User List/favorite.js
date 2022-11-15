@@ -4,6 +4,7 @@ const BASE_URL = "https://lighthouse-user-api.herokuapp.com";
 const INDEX_URL = BASE_URL + "/api/v1/users/";
 const USER_PER_PAGE = 12;
 const userData = [];
+let filteredUser = [];
 const favoriteUserList =
   JSON.parse(localStorage.getItem("favoriteUserList")) || [];
 
@@ -62,7 +63,10 @@ function renderPaginator(count) {
 }
 
 //// FUNCTION 切割每頁的資料
-function getDataPerPage(page, data) {
+function getDataPerPage(page) {
+  // 看是不是在搜尋條件下
+  const data = filteredUser.length ? filteredUser : favoriteUserList;
+
   const startIndex = (page - 1) * 12;
   return data.slice(startIndex, startIndex + 12);
 }
@@ -91,16 +95,18 @@ function showModal(id) {
 
 //// FUNCTION 搜尋結果
 function searchUserName(keyword) {
-  const filteredUser = [];
-
   favoriteUserList.forEach((user) => {
     // 資料有分 name 跟 surname ，先合併
     user.fullName = `${user.name} ${user.surname}`.toLowerCase().trim();
     // 檢查名字有沒有符合的，有就抓進陣列
-    if (user.fullName.includes(keyword)) {
-      filteredUser.push(user);
-    }
+    // if (user.fullName.includes(keyword)) {
+    //   filteredUser.push(user);
+    // }
   });
+
+  filteredUser = favoriteUserList.filter((user) =>
+    user.fullName.includes(keyword)
+  );
 
   // 因為有 forEach 就順便在裡面 push 了，不然也可以用 .filter()
   /*
@@ -120,7 +126,8 @@ function searchUserName(keyword) {
   }
 
   // 重新渲染畫面
-  renderData(filteredUser);
+  renderData(getDataPerPage(1));
+  renderPaginator(filteredUser.length);
 }
 
 //// FUNCTION 刪除我的最愛
@@ -129,15 +136,15 @@ function deleteFavorite(id) {
   if (!favoriteUserList || !favoriteUserList.length) return;
   // 找到符合 id 的那筆資料在清單中的 index
   const index = favoriteUserList.findIndex((user) => user.id === id);
-  const nowPage = Math.ceil(index / 12);
+  const nowPage = Math.ceil((index + 1) / 12);
   // 找不到那個user，就不用繼續下去
-  if (userIndex === -1) return;
+  if (index === -1) return;
   // 從清單中移除
   favoriteUserList.splice(index, 1);
   // 更新 local storage
   localStorage.setItem("favoriteUserList", JSON.stringify(favoriteUserList));
   // 重新 render 當前頁面
-  renderData(getDataPerPage(nowPage, favoriteUserList));
+  renderData(getDataPerPage(nowPage));
   renderPaginator(favoriteUserList.length);
 }
 
@@ -162,7 +169,7 @@ pagination.addEventListener("click", (event) => {
       : p.classList.remove("active");
   });
   // 呈現該頁內容
-  renderData(getDataPerPage(page, userData));
+  renderData(getDataPerPage(page));
 });
 
 //// EVENT LISTENER 搜尋列
@@ -182,7 +189,7 @@ axios
   .then((response) => {
     userData.push(...response.data.results);
     renderPaginator(favoriteUserList.length);
-    renderData(getDataPerPage(1, favoriteUserList));
+    renderData(getDataPerPage(1));
     // 第一頁的頁碼要先為 active 樣式
     document.querySelector(".page-item").classList.add("active");
   })
