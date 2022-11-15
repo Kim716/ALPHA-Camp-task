@@ -136,7 +136,8 @@ function deleteFavorite(id) {
   if (!favoriteUserList || !favoriteUserList.length) return;
   // 找到符合 id 的那筆資料在清單中的 index
   const index = favoriteUserList.findIndex((user) => user.id === id);
-  const nowPage = Math.ceil((index + 1) / 12);
+  const nowPage =
+    index === 0 ? Math.ceil((index + 1) / 12) : Math.ceil(index / 12); // TODO 當刪除第一頁以上的第一個，會跳轉到前一頁；但如果不讓他跳轉，在那頁什麼都沒有的時候還會停在那邊，也是很奇怪
   // 找不到那個user，就不用繼續下去
   if (index === -1) return;
   // 從清單中移除
@@ -146,6 +147,17 @@ function deleteFavorite(id) {
   // 重新 render 當前頁面
   renderData(getDataPerPage(nowPage));
   renderPaginator(favoriteUserList.length);
+  activePagination(nowPage);
+}
+
+//// FUNCTION active 頁碼
+function activePagination(page) {
+  const pages = document.querySelectorAll(".page-item");
+  pages.forEach((p) => {
+    Number(p.textContent) === page
+      ? p.classList.add("active")
+      : p.classList.remove("active");
+  });
 }
 
 //// EVENT LISTENER 彈出使用者資訊視窗、加入最愛
@@ -160,16 +172,17 @@ userPanel.addEventListener("click", (event) => {
 
 //// EVENT LISTENER 頁碼
 pagination.addEventListener("click", (event) => {
-  const pages = document.querySelectorAll(".page-item");
+  // const pages = document.querySelectorAll(".page-item");
   const page = Number(event.target.textContent);
   // active樣式
-  pages.forEach((p) => {
-    Number(p.textContent) === page
-      ? p.classList.add("active")
-      : p.classList.remove("active");
-  });
+  // pages.forEach((p) => {
+  //   Number(p.textContent) === page
+  //     ? p.classList.add("active")
+  //     : p.classList.remove("active");
+  // });
   // 呈現該頁內容
   renderData(getDataPerPage(page));
+  activePagination(page);
 });
 
 //// EVENT LISTENER 搜尋列
