@@ -2,17 +2,22 @@
 const BASE_URL = "https://movie-list.alphacamp.io";
 const MOVIE_URL = BASE_URL + "/api/v1/movies/";
 const POSTER_URL = BASE_URL + "/posters/";
+// 分頁設計，決定每頁要有幾個
+const moviePerPage = 12;
+const movies = [];
+let filteredMovies = [];
+// 辨別現在的模式、頁數 根據監聽器變更
+let cardMode = true;
+let page = 1;
+
+// DOM node
 const moviePanel = document.querySelector("#movie-panel");
 const searchForm = document.querySelector("#search-form");
 const paginator = document.querySelector(".pagination");
-// 分頁設計，決定每頁要有幾個
-const moviePerPage = 12;
+const icons = document.querySelector(".icons");
 
-const movies = [];
-let filteredMovies = [];
-
-////////////  FUNCTION render movie data
-function renderDatas(datas) {
+////////////  FUNCTION generate card html
+function generateCardHTML(datas) {
   let rawHTML = "";
   for (const movie of datas) {
     rawHTML += `
@@ -41,7 +46,60 @@ function renderDatas(datas) {
         </div>
         `;
   }
+  return rawHTML;
+}
+
+//////////// FUNCTION generate list html
+function generateListHTML(datas) {
+  let rawHTML = "";
+
+  datas.forEach((data) => {
+    rawHTML += `<div class="col-12 d-flex movie-list">
+          <div class="col-7 d-flex align-items-center">
+            <h4 class="list-movie-title mb-0">${data.title}</h4>
+          </div>
+          <button
+            class="btn btn-primary more-btn col-1"
+            data-bs-toggle="modal"
+            data-bs-target="#movie-modal"
+            data-id="${data.id}"
+            style="width: 4rem"
+          >
+            more
+          </button>
+          <button
+            class="btn btn-info favorite-btn col-1"
+            data-id="${data.id}"
+            style="width: 3rem; margin-left: 0.5rem"
+          >
+            ❤️
+          </button>
+        </div>`;
+  });
+
+  return rawHTML;
+}
+
+//////////// FUNCTION render movie panel
+function renderMoviePanel(generateFn, page) {
+  const rawHTML = generateFn(getMoviesByPage(page));
   moviePanel.innerHTML = rawHTML;
+}
+
+//////////// FUNCTION 切換預覽模式
+function changeViewMode(event) {
+  if (event.target.matches(".icon-card")) {
+    cardMode = true;
+  } else if (event.target.matches(".icon-list")) {
+    cardMode = false;
+  }
+}
+
+//////////// FUNCTION 判斷現在是什麼瀏覽模式然後渲染
+function checkViewModeToRender() {
+  cardMode
+    ? renderMoviePanel(generateCardHTML, page)
+    : renderMoviePanel(generateListHTML, page);
 }
 
 //////////// FUNCTION show modal
@@ -51,34 +109,46 @@ function showModal(data) {
   const date = document.querySelector("#movie-modal-date");
   const description = document.querySelector("#movie-modal-description");
 
+  // 避免出現上一部的殘影
+  title.textContent = "";
+  img.src = "";
+  date.textContent = "";
+  description.textContent = "";
+
+  // 帶入資料
   title.textContent = data.title;
   img.src = POSTER_URL + data.image;
   date.textContent = `Release date: ${data.release_date}`;
   description.textContent = data.description;
 }
 
-//////////// FUNCTION 搜尋電影
-function searchMovies(keywords) {
-  // if (!keywords.length) {
-  //   return alert("Type something valid");
-  // }
+//////////// FUNCTION 搜尋電影-1
+function generateFilteredMovie() {
+  // 抓取 keywords
+  const keywords = document
+    .querySelector("#search-value")
+    .value.trim()
+    .toLowerCase();
 
   // array.filter 會找出「所有」符合條件判斷式的陣列
   filteredMovies = movies.filter((movie) =>
     movie.title.toLowerCase().includes(keywords)
   );
-  // 優化前：
-  // movies.forEach((movie) => {
-  //   if (movie.title.toLowerCase().includes(keywords)) {
-  //     filteredMovies.push(movie);
-  //   }
-  // });
 
+  // 提示通知:找不到符合的項目
   if (!filteredMovies[0]) {
     return alert("can't find the movie");
   }
 
-  renderDatas(getMoviesByPage(1));
+  // 頁數歸1
+  page = 1;
+}
+
+//////////// FUNCTION 搜尋電影-2
+function completeSearching() {
+  generateFilteredMovie();
+  checkViewModeToRender();
+  renderPaginator(filteredMovies.length);
 }
 
 //////////// FUNCTION 加入收藏清單
@@ -112,11 +182,8 @@ function renderPaginator(amounts) {
   paginator.innerHTML = rawHTML;
 }
 
-//////////// FUNCTION 找出每頁要呈現出幾部電影
+//////////// FUNCTION 找出每頁要呈現出哪些電影
 function getMoviesByPage(page) {
-  // p1 -- index 0 ~ 11
-  // p2 -- index 12 ~ 23
-  // p3 -- index 24 ~ 35 ..
   // 確認有沒有啟動搜尋功能，決定分頁要呈現的哪一個內容
   const data = filteredMovies.length ? filteredMovies : movies;
   const startIndex = moviePerPage * (page - 1);
@@ -142,14 +209,9 @@ moviePanel.addEventListener("click", function (event) {
 
 //////////// EVENT LISTENER 產生搜尋結果
 searchForm.addEventListener("submit", (event) => {
-  event.preventDefault(); // 防止瀏覽器預設的跳轉頁面
-  const keywords = document
-    .querySelector("#search-value")
-    .value.trim()
-    .toLowerCase();
-
-  searchMovies(keywords);
-  renderPaginator(filteredMovies.length);
+  // 防止瀏覽器預設的跳轉頁面
+  event.preventDefault();
+  completeSearching();
 });
 
 //////////// EVENT LISTENER ：每按一次就搜尋一次的版本
@@ -178,8 +240,14 @@ paginator.addEventListener("click", function (event) {
   if (event.target.tagName !== "A") return;
 
   // 看點擊到哪一頁，重新渲染
-  const page = Number(event.target.dataset.page);
-  renderDatas(getMoviesByPage(page));
+  page = Number(event.target.dataset.page);
+  checkViewModeToRender();
+});
+
+//////////// EVENT LISTENER
+icons.addEventListener("click", (event) => {
+  changeViewMode(event);
+  checkViewModeToRender();
 });
 
 ///////////// EXECUTE
@@ -189,7 +257,7 @@ axios
     movies.push(...response.data.results);
     // 分頁器長度
     renderPaginator(movies.length);
-    // 根據頁數呈現資料
-    renderDatas(getMoviesByPage(1));
+    // 初始渲染是使用 card
+    checkViewModeToRender();
   })
   .catch((error) => console.log(error));

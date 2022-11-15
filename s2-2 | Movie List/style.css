@@ -21,3 +21,13 @@
   color: #fff;
   background: rgb(3, 110, 249);
 }
+
+.movie-list {
+  padding: 0.5rem 0;
+  border-top: 1px solid #ccc;
+}
+
+.list-movie-title {
+  color: #333;
+  font-size: 18px;
+}
