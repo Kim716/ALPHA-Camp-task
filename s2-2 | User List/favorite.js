@@ -136,12 +136,24 @@ function deleteFavorite(id) {
   if (!favoriteUserList || !favoriteUserList.length) return;
   // 找到符合 id 的那筆資料在清單中的 index
   const index = favoriteUserList.findIndex((user) => user.id === id);
-  const nowPage =
-    index === 0 ? Math.ceil((index + 1) / 12) : Math.ceil(index / 12); // TODO 當刪除第一頁以上的第一個，會跳轉到前一頁；但如果不讓他跳轉，在那頁什麼都沒有的時候還會停在那邊，也是很奇怪
-  // 找不到那個user，就不用繼續下去
+  let nowPage = 0;
+  // const nowPage =
+  //   index === 0 ? Math.ceil((index + 1) / 12) : Math.ceil(index / 12); // TODO 當刪除第一頁以上的第一個，會跳轉到前一頁；但如果不讓他跳轉，在那頁什麼都沒有的時候還會停在那邊，也是很奇怪
+  // // 找不到那個user，就不用繼續下去
+
   if (index === -1) return;
   // 從清單中移除
   favoriteUserList.splice(index, 1);
+
+  // 為了避免計算出第零頁而無法成功跳頁，index 為零時，需要+1
+  // 刪除的不是最後一個，但為12的倍數，就需要+1來避免跳轉到前一頁
+  // 只要刪除的是最後一個，也就是 favoriteUserList[index] 會變成 undefined 的狀況，代表要往前一頁跳轉（這時index為12的倍數）（這時已經排除 index 為零的狀況）
+  if (index === 0 || favoriteUserList[index]) {
+    nowPage = Math.ceil((index + 1) / 12);
+  } else if (!favoriteUserList[index]) {
+    nowPage = Math.ceil(index / 12);
+  }
+
   // 更新 local storage
   localStorage.setItem("favoriteUserList", JSON.stringify(favoriteUserList));
   // 重新 render 當前頁面
