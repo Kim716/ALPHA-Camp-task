@@ -8,7 +8,7 @@ const movies = [];
 let filteredMovies = [];
 // 辨別現在的模式、頁數 根據監聽器變更
 let cardMode = true;
-let page = 1;
+let currentPage = 1;
 
 // DOM node
 const moviePanel = document.querySelector("#movie-panel");
@@ -98,8 +98,8 @@ function changeViewMode(event) {
 //////////// FUNCTION 判斷現在是什麼瀏覽模式然後渲染
 function checkViewModeToRender() {
   cardMode
-    ? renderMoviePanel(generateCardHTML, page)
-    : renderMoviePanel(generateListHTML, page);
+    ? renderMoviePanel(generateCardHTML, currentPage)
+    : renderMoviePanel(generateListHTML, currentPage);
 }
 
 //////////// FUNCTION show modal
@@ -141,7 +141,7 @@ function generateFilteredMovie() {
   }
 
   // 頁數歸1
-  page = 1;
+  currentPage = 1;
 }
 
 //////////// FUNCTION 搜尋電影-2
@@ -240,7 +240,7 @@ paginator.addEventListener("click", function (event) {
   if (event.target.tagName !== "A") return;
 
   // 看點擊到哪一頁，重新渲染
-  page = Number(event.target.dataset.page);
+  currentPage = Number(event.target.dataset.page);
   checkViewModeToRender();
 });
 
