@@ -103,7 +103,7 @@ function checkViewModeToRender() {
 }
 
 //////////// FUNCTION show modal
-function showModal(data) {
+function showModal(id) {
   const title = document.querySelector("#movie-modal-title");
   const img = document.querySelector("#movie-modal-img");
   const date = document.querySelector("#movie-modal-date");
@@ -115,11 +115,16 @@ function showModal(data) {
   date.textContent = "";
   description.textContent = "";
 
-  // 帶入資料
-  title.textContent = data.title;
-  img.src = POSTER_URL + data.image;
-  date.textContent = `Release date: ${data.release_date}`;
-  description.textContent = data.description;
+  // 抓並帶入資料 （必須在上面四行以後抓資料，不然前面的殘影還是會出現）
+  axios
+    .get(MOVIE_URL + id)
+    .then((response) => {
+      title.textContent = response.data.results.title;
+      img.src = POSTER_URL + response.data.results.image;
+      date.textContent = `Release date: ${response.data.results.release_date}`;
+      description.textContent = response.data.results.description;
+    })
+    .catch((error) => console.log(error));
 }
 
 //////////// FUNCTION 搜尋電影-1
@@ -196,12 +201,7 @@ moviePanel.addEventListener("click", function (event) {
   // 要在render時 moreBtn favBtn 加上 data-id="" 來辨識是哪部電影
   const id = Number(event.target.dataset.id);
   if (event.target.matches(".more-btn")) {
-    axios
-      .get(MOVIE_URL + id)
-      .then((response) => {
-        showModal(response.data.results);
-      })
-      .catch((error) => console.log(error));
+    showModal(id);
   } else if (event.target.matches(".favorite-btn")) {
     addFavoriteMovie(id);
   }
