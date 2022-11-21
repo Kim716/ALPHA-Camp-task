@@ -13,11 +13,11 @@ html {
   flex-wrap: wrap;
 }
 
-.card-panel .card {
+#card-panel .card {
   outline: 2px solid tomato;
   /* 在牌桌的排版 */
   flex: 0 1 7%;
-  height: 8vw; /*不是很確定為何會是 h 對上 w*/
+  height: 8vw; /*不是很確定為何會是 h 對上 w？ 如果是對上vh，基本上只有寬度改變時，它就不會動，這樣會導致牌卡變成橫的長方形*/
   /* 牌卡內部文字、圖案的排版 */
   display: flex;
   flex-direction: column;
