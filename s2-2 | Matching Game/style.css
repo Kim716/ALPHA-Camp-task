@@ -1,0 +1,39 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 10px;
+}
+
+#card-panel {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.card-panel .card {
+  outline: 2px solid tomato;
+  /* 在牌桌的排版 */
+  flex: 0 1 7%;
+  height: 8vw; /*不是很確定為何會是 h 對上 w*/
+  /* 牌卡內部文字、圖案的排版 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.card img {
+  max-width: 30%;
+  align-self: center;
+}
+
+.card p {
+  margin: 3px;
+  font-size: 1rem;
+}
+
+.card p:last-child {
+  transform: rotate(180deg);
+}
