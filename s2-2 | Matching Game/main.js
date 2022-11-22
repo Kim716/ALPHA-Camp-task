@@ -1,4 +1,13 @@
 "use strict";
+// 遊戲狀態 //
+const GAME_STATE = {
+  FirstCardAwaits: "FirstCardAwaits",
+  SecondCardAwaits: "SecondCardAwaits",
+  CardsMatchFailed: "CardsMatchFailed",
+  CardsMatched: "CardsMatched",
+  GameFinished: "GameFinished",
+};
+
 // --- DATA --- //
 const Symbols = [
   "https://assets-lighthouse.alphacamp.co/uploads/image/file/17989/__.png", // 黑桃
@@ -9,6 +18,12 @@ const Symbols = [
 
 // --- DOM nodes MVC 都會用到--- //
 const cardPanel = document.querySelector("#card-panel");
+
+// --- Model 管理資料 --- //
+const model = {
+  // 被翻開的卡片資料
+  revealedCards: [],
+};
 
 // --- View --- //
 const view = {
@@ -57,9 +72,8 @@ const view = {
     return `<div class="card back" data-index='${index}'></div>`;
   },
 
-  renderCards: function () {
-    cardPanel.innerHTML = utility
-      .getRandomNumberArray(52)
+  displayCards: function (indexes) {
+    cardPanel.innerHTML = indexes
       .map((index) => this.getCardElement(index))
       .join("");
   },
@@ -95,6 +109,17 @@ const utility = {
   },
 };
 
+// --- Controller --- //
+const controller = {
+  // 目前遊戲狀態
+  currentState: GAME_STATE.FirstCardAwaits,
+
+  // controller 會啟動遊戲的初始化，所以發牌由它呼叫
+  renderCards: function () {
+    view.displayCards(utility.getRandomNumberArray(52));
+  },
+};
+
 // --- EVENT LISTENER --- //
 // EL-1 監聽翻牌事件（監聽牌桌）
 cardPanel.addEventListener("click", (e) => {
@@ -111,7 +136,7 @@ cardPanel.addEventListener("click", (e) => {
 });
 
 // --- EXECUTE --- //
-view.renderCards();
+controller.renderCards();
 
 // // EL-1 監聽翻牌事件（監聽每張牌）
 // document.querySelectorAll(".card").forEach((card) => {
