@@ -14,6 +14,7 @@ html {
 }
 
 #card-panel .card {
+  position: relative; /**/
   outline: 2px solid tomato;
   /* 在牌桌的排版 */
   flex: 0 1 7%;
@@ -37,4 +38,23 @@ html {
 
 .card p:last-child {
   transform: rotate(180deg);
+}
+
+.red {
+  color: red;
+}
+
+.back {
+  background: url("https://assets-lighthouse.alphacamp.co/uploads/image/file/9222/ExportedContentImage_00.png");
+  background-size: cover;
+}
+
+/**/
+.for-card-EL {
+  position: absolute;
+  top: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
 }
