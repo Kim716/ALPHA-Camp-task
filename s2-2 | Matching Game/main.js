@@ -41,9 +41,25 @@ const view = {
   },
 
   renderCards: function () {
-    cardPanel.innerHTML = Array.from(Array(52).keys(), (index) =>
-      this.generateCardHTML(index)
-    ).join("");
+    cardPanel.innerHTML = utility
+      .getRandomNumberArray(52)
+      .map((index) => this.generateCardHTML(index))
+      .join("");
+  },
+};
+
+// --- Utilities --- //
+const utility = {
+  getRandomNumberArray: function (count) {
+    const number = Array.from(Array(count).keys());
+    for (let index = number.length - 1; index >= 0; index--) {
+      const randomIndex = Math.trunc(Math.random() * (index + 1));
+      [number[index], number[randomIndex]] = [
+        number[randomIndex],
+        number[index],
+      ];
+    }
+    return number;
   },
 };
 
