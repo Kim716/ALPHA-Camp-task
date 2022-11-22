@@ -23,6 +23,14 @@ const cardPanel = document.querySelector("#card-panel");
 const model = {
   // 被翻開的卡片資料
   revealedCards: [],
+
+  // 判斷兩張牌是否配對成功（餘數一樣，就是不同花色同個數字）
+  isRevealedCardsMatches: function () {
+    return (
+      Number(this.revealedCards[0].dataset.index) % 13 ===
+      Number(this.revealedCards[1].dataset.index) % 13
+    );
+  },
 };
 
 // --- View --- //
@@ -92,6 +100,11 @@ const view = {
     card.classList.add("back");
     card.innerHTML = "";
   },
+
+  // 配對成功
+  pairedCard: function (card) {
+    card.classList.add("paired");
+  },
 };
 
 // --- Utilities --- //
@@ -118,6 +131,45 @@ const controller = {
   renderCards: function () {
     view.displayCards(utility.getRandomNumberArray(52));
   },
+
+  // 根據遊戲狀態派發工作
+  dispatchCardAction: function (card) {
+    // 被點擊的card如果已經是正面，就不能再執行下去
+    if (!card.classList.contains("back")) {
+      return;
+    }
+
+    switch (this.currentState) {
+      // 在等待翻開第一張卡的階段，點擊卡片卡會被翻開、資料會被塞入這張牌的資訊、遊戲狀態進入等待第二張牌
+      case GAME_STATE.FirstCardAwaits:
+        view.flipCard(card);
+        model.revealedCards.push(card);
+        this.currentState = GAME_STATE.SecondCardAwaits;
+        break;
+      // 等待翻開第二張卡的階段，點擊卡片卡會被翻開、資料會被塞入這張牌的資訊、判斷兩張卡牌
+      case GAME_STATE.SecondCardAwaits:
+        view.flipCard(card);
+        model.revealedCards.push(card);
+        if (model.isRevealedCardsMatches()) {
+          // 成功時更改狀態，產生成功樣式、清空翻牌資訊、回到等待翻開第一張卡階段
+          this.currentState = GAME_STATE.CardsMatched;
+          model.revealedCards.forEach((card) => view.pairedCard(card));
+          model.revealedCards = [];
+          this.currentState = GAME_STATE.FirstCardAwaits;
+        } else {
+          // 失敗時時更改狀態，隔一秒翻回去、清空翻牌資訊、回到等待翻開第一張卡階段
+          this.currentState = GAME_STATE.CardsMatchFailed;
+          setTimeout(() => {
+            model.revealedCards.forEach((card) => view.flipCard(card));
+            model.revealedCards = []; // 要擺在settimeout裡面，不然擺外面會先清空，就翻不到牌
+            this.currentState = GAME_STATE.FirstCardAwaits;
+          }, 1000);
+        }
+        break;
+      case GAME_STATE.CardsMatched:
+        break;
+    }
+  },
 };
 
 // --- EVENT LISTENER --- //
@@ -126,12 +178,12 @@ cardPanel.addEventListener("click", (e) => {
   if (e.target.matches("#card-panel")) return;
 
   if (e.target.matches(".card")) {
-    view.flipCard(e.target);
+    controller.dispatchCardAction(e.target);
     return;
   }
 
   if (e.target.matches(".for-card-EL")) {
-    view.flipCard(e.target.parentElement);
+    controller.dispatchCardAction(e.target.parentElement);
   }
 });
 

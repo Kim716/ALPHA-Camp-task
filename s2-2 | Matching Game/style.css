@@ -49,6 +49,11 @@ html {
   background-size: cover;
 }
 
+/* 配對成功樣式 */
+.paired {
+  background: lightgoldenrodyellow;
+}
+
 /**/
 .for-card-EL {
   position: absolute;
