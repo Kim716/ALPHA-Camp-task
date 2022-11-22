@@ -10,6 +10,7 @@ const Symbols = [
 // --- DOM nodes MVC 都會用到--- //
 const cardPanel = document.querySelector("#card-panel");
 
+// --- View --- //
 const view = {
   transformNumber: function (number) {
     switch (number) {
@@ -40,7 +41,9 @@ const view = {
   },
 
   renderCards: function () {
-    return (cardPanel.innerHTML = this.generateCardHTML(0));
+    cardPanel.innerHTML = Array.from(Array(52).keys(), (index) =>
+      this.generateCardHTML(index)
+    ).join("");
   },
 };
 
