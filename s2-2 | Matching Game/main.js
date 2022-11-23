@@ -37,6 +37,7 @@ const model = {
 // --- View --- //
 const view = {
   cardPanel: document.querySelector("#card-panel"),
+  restartBtn: document.querySelector(".restart-btn"),
 
   transformNumber: function (number) {
     switch (number) {
@@ -139,6 +140,16 @@ const view = {
       );
     });
   },
+
+  // 遊戲結束
+  showGameFinished: function () {
+    const div = document.createElement("div");
+    div.classList.add("completed");
+    div.innerHTML = `<p>🎊 Complete! 🎊</p>
+      <p>Score: ${model.score}</p>
+      <p>You've tried: ${model.triedTimes} times</p>`;
+    document.querySelector("body").prepend(div);
+  },
 };
 
 // --- Utilities --- //
@@ -191,6 +202,12 @@ const controller = {
           view.pairedCards(...model.revealedCards);
           model.revealedCards = [];
           view.renderScore((model.score += 10));
+          // 如果全部翻完，遊戲狀態為結束，跑出結束畫面
+          if (model.score === 260) {
+            this.currentState = GAME_STATE.GameFinished;
+            view.showGameFinished();
+            return;
+          }
           this.currentState = GAME_STATE.FirstCardAwaits;
         } else {
           // 失敗時時更改狀態，隔一秒翻回去、清空翻牌資訊、回到等待翻開第一張卡階段
@@ -198,8 +215,6 @@ const controller = {
           view.appendWrongAnimation(...model.revealedCards);
           setTimeout(this.resetCards, 1000);
         }
-        break;
-      case GAME_STATE.CardsMatched:
         break;
     }
   },
@@ -209,6 +224,21 @@ const controller = {
     view.flipCards(...model.revealedCards);
     model.revealedCards = []; // 要擺在settimeout裡面，不然擺外面會先清空，就翻不到牌
     controller.currentState = GAME_STATE.FirstCardAwaits; // 這裡如果用 this，它不會指向controller，而是指向 window，因為是setTimeout呼叫他，而setTimeout是瀏覽器提供的函式？
+  },
+
+  // 重新開始遊戲
+  restartGame: function () {
+    // 清空分數、次數、重新洗牌、移掉結束畫面、回到狀態一
+    model.score = 0;
+    view.renderScore(model.score);
+
+    model.triedTimes = 0;
+    view.renderTriedTimes(model.triedTimes);
+
+    const completedView = document.querySelector(".completed");
+    if (completedView) completedView.remove();
+    controller.renderCards();
+    controller.currentState = GAME_STATE.FirstCardAwaits;
   },
 };
 
@@ -226,6 +256,9 @@ view.cardPanel.addEventListener("click", (e) => {
     controller.dispatchCardAction(e.target.parentElement);
   }
 });
+
+// EL-2 監聽重新按鈕
+view.restartBtn.addEventListener("click", controller.restartGame);
 
 // --- EXECUTE --- //
 controller.renderCards();

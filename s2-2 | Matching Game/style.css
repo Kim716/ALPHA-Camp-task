@@ -111,6 +111,46 @@ header .title h2 {
   background-color: transparent;
 }
 
+/** Game finished **/
+.completed {
+  position: absolute;
+  z-index: 999;
+  top: 33vh;
+  background-color: RGBA(232, 246, 254, 0.8);
+  width: 100vw;
+  padding: 50px 0 20px;
+}
+.completed > p {
+  font-size: 1.5rem;
+  color: black;
+  text-align: center;
+  margin: 0;
+  padding: 0.3rem 0;
+}
+.completed > p:first-child {
+  font-size: 3em;
+  font-weight: 700;
+  color: #758d9a;
+}
+
+.restart-btn {
+  border: none;
+  display: block;
+  margin: 3rem auto 0;
+  background-color: #758d9a;
+  border-radius: 5px;
+  color: #fff;
+  padding: 5px 10px;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.restart-btn:hover {
+  background-color: rgba(117, 141, 154, 0.2);
+  color: #758d9a;
+  transition: 0.2s;
+}
+
 /* animation */
 .wrong {
   animation: wrongAnimation 0.2s 5;
