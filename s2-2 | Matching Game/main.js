@@ -1,12 +1,14 @@
 "use strict";
 // 遊戲狀態 //
-const GAME_STATE = {
+// 運用Object.freeze()讓括號內的物件被凍結，防止物件內容、屬性、原型被修改
+// 為淺凍結
+const GAME_STATE = Object.freeze({
   FirstCardAwaits: "FirstCardAwaits",
   SecondCardAwaits: "SecondCardAwaits",
   CardsMatchFailed: "CardsMatchFailed",
   CardsMatched: "CardsMatched",
   GameFinished: "GameFinished",
-};
+});
 
 // --- DATA --- //
 const Symbols = [
@@ -25,7 +27,7 @@ const model = {
   // 被翻開的卡片資料
   revealedCards: [],
 
-  // 判斷兩張牌是否配對成功（餘數一樣，就是不同花色同個數字）
+  // 判斷兩張牌是否配對成功（餘數一樣，就是不同花色同個數字）回傳 Boolean
   isRevealedCardsMatches: function () {
     return (
       Number(this.revealedCards[0].dataset.index) % 13 ===
@@ -39,6 +41,7 @@ const view = {
   cardPanel: document.querySelector("#card-panel"),
   restartBtn: document.querySelector(".restart-btn"),
 
+  // 製作特殊數字牌
   transformNumber: function (number) {
     switch (number) {
       case 1:
@@ -54,53 +57,57 @@ const view = {
     }
   },
 
+  // 根據傳入的數字製造卡牌 html
   getCardContent: function (index) {
     const number = this.transformNumber((index % 13) + 1);
     const symbol = Symbols[Math.trunc(index / 13)];
 
-    if (index > 12 && index < 39) {
-      return `
-      <div class='for-card-EL'></div>
-        <p class='red'>${number}</p>
-        <img
-          src="${symbol}"
-          alt="花色"
-        />
-        <p class='red'>${number}</p>
-      `;
-    }
     return `
-        <div class='for-card-EL'></div>
-        <p>${number}</p>
+        
+        <p class='card-number for-card-EL'>${number}</p>
         <img
           src="${symbol}"
           alt="花色"
+          class='for-card-EL'
         />
-        <p>${number}</p>
+        <p class='card-number for-card-EL'>${number}</p>
       `;
   },
 
+  // 菱形、愛心數字轉紅 （指定抽到的那張牌）
+  turnRedCard: function (card, index) {
+    if (index > 12 && index < 39) {
+      card
+        .querySelectorAll(".card-number")
+        .forEach((num) => num.classList.add("red"));
+    }
+  },
+
+  // 製作出 card div （背面時只需要它）
   getCardElement: function (index) {
     return `<div class="card back" data-index='${index}'></div>`;
   },
 
+  // 收到亂數陣列，製作 card div 陣列，利用.join() 塞入 innerHTML
   displayCards: function (indexes) {
     this.cardPanel.innerHTML = indexes
       .map((index) => this.getCardElement(index))
       .join("");
   },
 
+  // 翻牌
   flipCards: function (...cards) {
     cards.forEach((card) => {
       const cardIndex = Number(card.dataset.index);
-      // 背翻正
+      // 背翻正：呈現資訊
       if (card.classList.contains("back")) {
         card.classList.remove("back");
         card.innerHTML = this.getCardContent(cardIndex);
+        this.turnRedCard(card, cardIndex);
         return;
       }
 
-      // 正翻背
+      // 正翻背：有牌背花色，清空資訊
       card.classList.add("back");
       card.innerHTML = "";
     });
@@ -141,7 +148,7 @@ const view = {
     });
   },
 
-  // 遊戲結束
+  // 遊戲結束：創建div，放入結束資訊，成為body中第一個元素
   showGameFinished: function () {
     const div = document.createElement("div");
     div.classList.add("completed");
@@ -153,7 +160,9 @@ const view = {
 };
 
 // --- Utilities --- //
+// 別人寫好的演算法模組
 const utility = {
+  // Fisher-Yates Shuffle
   getRandomNumberArray: function (count) {
     const number = Array.from(Array(count).keys());
     for (let index = number.length - 1; index >= 0; index--) {
@@ -197,7 +206,7 @@ const controller = {
         view.flipCards(card);
         model.revealedCards.push(card);
         if (model.isRevealedCardsMatches()) {
-          // 成功時更改狀態，產生成功樣式、清空翻牌資訊、加分、回到等待翻開第一張卡階段
+          // 成功時更改狀態，產生成功樣式、清空翻牌資訊、加分、判斷結束了嗎、回到等待翻開第一張卡階段
           this.currentState = GAME_STATE.CardsMatched;
           view.pairedCards(...model.revealedCards);
           model.revealedCards = [];
@@ -210,7 +219,7 @@ const controller = {
           }
           this.currentState = GAME_STATE.FirstCardAwaits;
         } else {
-          // 失敗時時更改狀態，隔一秒翻回去、清空翻牌資訊、回到等待翻開第一張卡階段
+          // 失敗時時更改狀態，失敗動畫、隔一秒翻回去、清空翻牌資訊、回到等待翻開第一張卡階段
           this.currentState = GAME_STATE.CardsMatchFailed;
           view.appendWrongAnimation(...model.revealedCards);
           setTimeout(this.resetCards, 1000);
@@ -219,25 +228,27 @@ const controller = {
     }
   },
 
-  // 回到狀態一繼續遊戲
+  // 回到狀態一的設置繼續遊戲
   resetCards: function () {
     view.flipCards(...model.revealedCards);
     model.revealedCards = []; // 要擺在settimeout裡面，不然擺外面會先清空，就翻不到牌
-    controller.currentState = GAME_STATE.FirstCardAwaits; // 這裡如果用 this，它不會指向controller，而是指向 window，因為是setTimeout呼叫他，而setTimeout是瀏覽器提供的函式？
+    controller.currentState = GAME_STATE.FirstCardAwaits; // 這裡如果用 this，它不會指向controller，而是指向 window，因為是setTimeout呼叫他，而setTimeout是瀏覽器提供的函式？ // 要在setTimeout中，不然沒跑完動畫就可以一直點，會出現不對的畫面
   },
 
   // 重新開始遊戲
   restartGame: function () {
-    // 清空分數、次數、重新洗牌、移掉結束畫面、回到狀態一
+    // 清空分數
     model.score = 0;
     view.renderScore(model.score);
-
+    // 清空次數
     model.triedTimes = 0;
     view.renderTriedTimes(model.triedTimes);
-
+    // 如果是在結束時 restart 才需要移調畫面
     const completedView = document.querySelector(".completed");
     if (completedView) completedView.remove();
+    // 重新洗牌，會被監聽器呼叫，所以要用controller
     controller.renderCards();
+    // 更改遊戲狀態
     controller.currentState = GAME_STATE.FirstCardAwaits;
   },
 };
@@ -251,10 +262,10 @@ view.cardPanel.addEventListener("click", (e) => {
     controller.dispatchCardAction(e.target);
     return;
   }
-
-  if (e.target.matches(".for-card-EL")) {
-    controller.dispatchCardAction(e.target.parentElement);
-  }
+  // 點擊到數字或圖案時，但因為遊戲有自動翻背設計，所以不會需要它來翻回背面
+  // if (e.target.matches(".for-card-EL")) {
+  //   controller.dispatchCardAction(e.target.parentElement);
+  // }
 });
 
 // EL-2 監聽重新按鈕
