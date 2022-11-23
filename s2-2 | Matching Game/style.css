@@ -110,3 +110,17 @@ header .title h2 {
   height: 100%;
   background-color: transparent;
 }
+
+/* animation */
+.wrong {
+  animation: wrongAnimation 0.2s 5;
+}
+
+@keyframes wrongAnimation {
+  0% {
+  }
+
+  100% {
+    border: 2px solid #fda;
+  }
+}

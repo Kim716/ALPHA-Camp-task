@@ -123,6 +123,22 @@ const view = {
       ".tried"
     ).textContent = `You've tried: ${times} times`;
   },
+
+  // 錯誤時的動畫
+  appendWrongAnimation: function (...cards) {
+    cards.forEach((card) => {
+      card.classList.add("wrong");
+      // 在動畫結束時把動畫的class移除，不然就只能播一次
+      card.addEventListener(
+        "animationend",
+        (e) => {
+          e.target.classList.remove("wrong");
+        },
+        // 為了避免一直掛上監聽器吃效能，這個監聽器只用一次就會被刪掉，預設為false
+        { once: true }
+      );
+    });
+  },
 };
 
 // --- Utilities --- //
@@ -179,6 +195,7 @@ const controller = {
         } else {
           // 失敗時時更改狀態，隔一秒翻回去、清空翻牌資訊、回到等待翻開第一張卡階段
           this.currentState = GAME_STATE.CardsMatchFailed;
+          view.appendWrongAnimation(...model.revealedCards);
           setTimeout(this.resetCards, 1000);
         }
         break;
