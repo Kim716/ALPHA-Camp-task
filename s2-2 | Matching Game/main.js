@@ -86,24 +86,27 @@ const view = {
       .join("");
   },
 
-  flipCard: function (card) {
-    const cardIndex = Number(card.dataset.index);
+  flipCards: function (...cards) {
+    cards.forEach((card) => {
+      const cardIndex = Number(card.dataset.index);
+      // 背翻正
+      if (card.classList.contains("back")) {
+        card.classList.remove("back");
+        card.innerHTML = this.getCardContent(cardIndex);
+        return;
+      }
 
-    // 背翻正
-    if (card.classList.contains("back")) {
-      card.classList.remove("back");
-      card.innerHTML = this.getCardContent(cardIndex);
-      return;
-    }
-
-    // 正翻背
-    card.classList.add("back");
-    card.innerHTML = "";
+      // 正翻背
+      card.classList.add("back");
+      card.innerHTML = "";
+    });
   },
 
-  // 配對成功
-  pairedCard: function (card) {
-    card.classList.add("paired");
+  // 配對成功 (這裡是 rest pattern 把傳進來的多個參數包成陣列)
+  pairedCards: function (...cards) {
+    cards.forEach((card) => {
+      card.classList.add("paired");
+    });
   },
 };
 
@@ -142,33 +145,36 @@ const controller = {
     switch (this.currentState) {
       // 在等待翻開第一張卡的階段，點擊卡片卡會被翻開、資料會被塞入這張牌的資訊、遊戲狀態進入等待第二張牌
       case GAME_STATE.FirstCardAwaits:
-        view.flipCard(card);
+        view.flipCards(card);
         model.revealedCards.push(card);
         this.currentState = GAME_STATE.SecondCardAwaits;
         break;
       // 等待翻開第二張卡的階段，點擊卡片卡會被翻開、資料會被塞入這張牌的資訊、判斷兩張卡牌
       case GAME_STATE.SecondCardAwaits:
-        view.flipCard(card);
+        view.flipCards(card);
         model.revealedCards.push(card);
         if (model.isRevealedCardsMatches()) {
           // 成功時更改狀態，產生成功樣式、清空翻牌資訊、回到等待翻開第一張卡階段
           this.currentState = GAME_STATE.CardsMatched;
-          model.revealedCards.forEach((card) => view.pairedCard(card));
+          view.pairedCards(...model.revealedCards);
           model.revealedCards = [];
           this.currentState = GAME_STATE.FirstCardAwaits;
         } else {
           // 失敗時時更改狀態，隔一秒翻回去、清空翻牌資訊、回到等待翻開第一張卡階段
           this.currentState = GAME_STATE.CardsMatchFailed;
-          setTimeout(() => {
-            model.revealedCards.forEach((card) => view.flipCard(card));
-            model.revealedCards = []; // 要擺在settimeout裡面，不然擺外面會先清空，就翻不到牌
-            this.currentState = GAME_STATE.FirstCardAwaits;
-          }, 1000);
+          setTimeout(this.resetCards, 1000);
         }
         break;
       case GAME_STATE.CardsMatched:
         break;
     }
+  },
+
+  // 回到狀態一繼續遊戲
+  resetCards: function () {
+    view.flipCards(...model.revealedCards);
+    model.revealedCards = []; // 要擺在settimeout裡面，不然擺外面會先清空，就翻不到牌
+    controller.currentState = GAME_STATE.FirstCardAwaits; // 這裡如果用 this，它不會指向controller，而是指向 window，因為是setTimeout呼叫他，而setTimeout是瀏覽器提供的函式？
   },
 };
 
