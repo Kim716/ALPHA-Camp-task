@@ -16,11 +16,12 @@ const Symbols = [
   "https://assets-lighthouse.alphacamp.co/uploads/image/file/17988/__.png", // 梅花
 ];
 
-// --- DOM nodes MVC 都會用到--- //
-const cardPanel = document.querySelector("#card-panel");
-
 // --- Model 管理資料 --- //
 const model = {
+  // 分數、嘗試次數
+  score: 0,
+  triedTimes: 0,
+
   // 被翻開的卡片資料
   revealedCards: [],
 
@@ -35,6 +36,8 @@ const model = {
 
 // --- View --- //
 const view = {
+  cardPanel: document.querySelector("#card-panel"),
+
   transformNumber: function (number) {
     switch (number) {
       case 1:
@@ -81,7 +84,7 @@ const view = {
   },
 
   displayCards: function (indexes) {
-    cardPanel.innerHTML = indexes
+    this.cardPanel.innerHTML = indexes
       .map((index) => this.getCardElement(index))
       .join("");
   },
@@ -107,6 +110,18 @@ const view = {
     cards.forEach((card) => {
       card.classList.add("paired");
     });
+  },
+
+  // 修改分數
+  renderScore(score) {
+    document.querySelector(".score").textContent = `Score: ${score}`;
+  },
+
+  // 修改次數
+  renderTriedTimes(times) {
+    document.querySelector(
+      ".tried"
+    ).textContent = `You've tried: ${times} times`;
   },
 };
 
@@ -149,15 +164,17 @@ const controller = {
         model.revealedCards.push(card);
         this.currentState = GAME_STATE.SecondCardAwaits;
         break;
-      // 等待翻開第二張卡的階段，點擊卡片卡會被翻開、資料會被塞入這張牌的資訊、判斷兩張卡牌
+      // 等待翻開第二張卡的階段，點擊卡片嘗試次數+1、卡會被翻開、資料會被塞入這張牌的資訊、判斷兩張卡牌
       case GAME_STATE.SecondCardAwaits:
+        view.renderTriedTimes(++model.triedTimes);
         view.flipCards(card);
         model.revealedCards.push(card);
         if (model.isRevealedCardsMatches()) {
-          // 成功時更改狀態，產生成功樣式、清空翻牌資訊、回到等待翻開第一張卡階段
+          // 成功時更改狀態，產生成功樣式、清空翻牌資訊、加分、回到等待翻開第一張卡階段
           this.currentState = GAME_STATE.CardsMatched;
           view.pairedCards(...model.revealedCards);
           model.revealedCards = [];
+          view.renderScore((model.score += 10));
           this.currentState = GAME_STATE.FirstCardAwaits;
         } else {
           // 失敗時時更改狀態，隔一秒翻回去、清空翻牌資訊、回到等待翻開第一張卡階段
@@ -180,7 +197,7 @@ const controller = {
 
 // --- EVENT LISTENER --- //
 // EL-1 監聽翻牌事件（監聽牌桌）
-cardPanel.addEventListener("click", (e) => {
+view.cardPanel.addEventListener("click", (e) => {
   if (e.target.matches("#card-panel")) return;
 
   if (e.target.matches(".card")) {
