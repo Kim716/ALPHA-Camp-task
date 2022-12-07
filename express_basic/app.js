@@ -13,7 +13,12 @@ const port = 3000;
 // 以下表示在 localhost:3000/ （根目錄下）
 // 不需要設定 header，express 會自動判斷 content type
 app.get("/", (req, res) => {
-  res.send("This is my first Express Web APP");
+  res.send("This is my first Web APP created by Express");
+});
+
+// 設定其他路由
+app.get("/languages/:language", (req, res) => {
+  res.send(`${req.params.language} is a popular language`);
 });
 
 // 啟動伺服器監聽
